@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.tiny.cloud/1/q8eyc0pclp8vkwynx04vs7o65308fed83bgx6k7udmbjg26m/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+    <style>
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .btn {
+            margin-right: 5px;
+            border-radius: 20px;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        h2 {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            color: #ff69b4;
+        }
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .table th {
+            background-color: #ff69b4;
+            color: white;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #ffe4e1;
+        }
+        .modal-dialog {
+            max-width: 1350px;
+        }
+        .room-info {
+            border-left: 1px solid #ddd;
+            padding-left: 20px;
+        }
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .form-inline label {
+            margin-right: 0.5rem;
+        }
+        .form-group label {
+            width: 150px;
+            margin-right: 10px;
+        }
+        .form-group input, .form-group textarea {
+            flex: 1;
+            max-width: 300px;
+        }
+        .weekly-label {
+            display: flex;
+            align-items: center;
+        }
+        .only-label {
+            display: flex;
+            align-items: center;
+        }
+        .daily-label {
+            display: flex;
+            align-items: center;
+        }
+        .range-label {
+            display: flex;
+            align-items: center;
+        }
+        .form-inline .form-control {
+            width: auto;
+            flex: 1;
+        }
+        input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        /* Google Fonts - Poppins */
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap");
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+        section {
+            position: fixed;
+            height: 100%;
+            width: 100%;
+            background: #e3f2fd;
+        }
+        button {
+            font-weight: 400;
+            color: #fff;
+            padding: 14px 22px;
+            border: none;
+            background: #4070f4;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #265df2;
+        }
+        .modal-box {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        .overlay {
+            position: fixed;
+            height: 100%;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            pointer-events: none;
+        }
+        section.active .overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 380px;
+            width: 100%;
+            padding: 30px 20px;
+            border-radius: 24px;
+            background-color: #fff;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%) scale(1.2);
+            border: none; /* Remove border */
+        }
+        section.active .modal-box {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .modal-box i {
+            font-size: 70px;
+            color: #4070f4;
+        }
+        .modal-box h2 {
+            margin-top: 20px;
+            font-size: 25px;
+            font-weight: 500;
+            color: #333;
+        }
+        .modal-box h3 {
+            font-size: 16px;
+            font-weight: 400;
+            color: #333;
+            text-align: center;
+        }
+        .modal-box .buttons {
+            margin-top: 25px;
+        }
+        .modal-box button {
+            font-size: 14px;
+            padding: 6px 12px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h2 class="mb-4">Bookings</h2>
+
+    <!-- Kiểm tra nếu danh sách bookings rỗng -->
+    <div th:if="${#lists.isEmpty(bookings)}" class="alert alert-warning">
+        No bookings found.
+    </div>
+
+    <table class="table table-bordered table-hover" th:if="${not #lists.isEmpty(bookings)}">
+        <thead class="table-dark">
+        <tr>
+            <th>Booking ID</th>
+            <th>Username</th>
+            <th>Room ID</th>
+            <th>Booking Type</th>
+            <th>Weekdays</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="booking : ${bookings}">
+            <td th:text="${booking.bookingId}" th:onclick="'fetchBookingDetails(' + ${booking.bookingId} + ')'"></td>
+            <td th:text="${booking.username}"></td>
+            <td th:text="${booking.roomId}"></td>
+            <td th:text="${booking.bookingType}"></td>
+            <td th:text="${booking.bookingType == 'WEEKLY' ? booking.weekdays : '-'}"></td>
+            <td>
+                <button class="btn btn-primary btn-sm" th:onclick="'openEditForm(' + ${booking.bookingId} + ')'">Edit</button>
+                <button class="btn btn-danger btn-sm" th:onclick="'openDeletePopup(' + ${booking.bookingId} + ')'">Delete</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <button class="btn btn-success mt-3" onclick="openCreateForm()">Create Booking</button>
+</div>
+
+<!-- Booking Edit Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1" role="dialog" aria-labelledby="bookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookingModalLabel">Edit Meeting</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <form id="bookingForm">
+                            <div class="form-group">
+                                <label for="title">Title:</label>
+                                <input type="text" class="form-control" id="title">
+                            </div>
+                            <div class="form-group">
+                                <label for="attendees">Attendees:</label>
+                                <input type="text" class="form-control" id="attendees">
+                            </div>
+                            <div class="form-group">
+                                <label for="username">Username:</label>
+                                <input type="text" class="form-control" id="username">
+                            </div>
+                            <div class="form-group">
+                                <label for="content">Content Brief:</label>
+                                <textarea id="content" rows="3" class="form-control"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Link MS Team:</label>
+                                <input type="radio" name="linkMS" id="linkYes" class="mr-1"> Yes
+                                <input type="radio" name="linkMS" id="linkNo" class="ml-3 mr-1" checked> No
+                            </div>
+                            <div class="form-group">
+                                <label>Recurrence pattern:</label>
+                                <input type="radio" name="recurrence" id="only" onclick="toggleRecurrence('only')"> Only
+                                <input type="radio" name="recurrence" id="daily" onclick="toggleRecurrence('daily')"> Daily
+                                <input type="radio" name="recurrence" id="weekly" onclick="toggleRecurrence('weekly')"> Weekly
+                            </div>
+                            <div id="recurrenceOnly" class="form-group">
+                                <div class="only-label">
+                                    <label for="dateOnly">Date: </label>
+                                    <input type="datetime-local" class="form-control ml-2" id="dateOnly">
+                                </div>
+                            </div>
+                            <div id="recurrenceDaily" class="form-group" style="display:none;">
+                                <div class="daily-label">
+                                    <label for="dateStartDaily">Range: </label>
+                                    <input type="datetime-local" class="form-control ml-2" id="dateStartDaily">
+                                    <input type="datetime-local" class="form-control ml-2" id="dateEndDaily">
+                                </div>
+                            </div>
+                            <div id="recurrenceWeekly" class="form-group" style="display:none;">
+                                <div class="weekly-label">
+                                    <label>Weekly:</label>
+                                    <div class="form-inline ml-2">
+                                        <input type="checkbox" id="mo" class="ml-2"> Mo
+                                        <input type="checkbox" id="tu" class="ml-2"> Tu
+                                        <input type="checkbox" id="we" class="ml-2"> We
+                                        <input type="checkbox" id="th" class="ml-2"> Th
+                                        <input type="checkbox" id="fr" class="ml-2"> Fr
+                                    </div>
+                                </div>
+                                <div class="range-label">
+                                    <label>Range:</label>
+                                    <input type="datetime-local" class="form-control ml-2" id="dateStartWeekly">
+                                    <input type="datetime-local" class="form-control ml-2" id="dateEndWeekly">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-4 room-info">
+                        <h5>Room Information</h5>
+                        <p><strong>Time:</strong></p>
+                        <p><strong>Building:</strong> 789 Tower</p>
+                        <p><strong>Floor:</strong> Tầng 8 - new</p>
+                        <p><strong>Meeting room:</strong> Brainstorming</p>
+                        <p><strong>Price:</strong> 100,000 VNĐ/h</p>
+                        <p><strong>Seats:</strong> 6</p>
+                        <p><strong>Devices and services:</strong></p>
+                        <p><strong>Images:</strong></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="editButton" onclick="toggleEdit()">Edit</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container mt-5">
+    <div class="modal fade" id="createBookingModal" tabindex="-1" role="dialog" aria-labelledby="createBookingModalLabel" aria-hidden="false">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createBookingModalLabel">Create Meeting</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <form id="createBookingForm">
+                                <div class="form-group">
+                                    <label for="createTitle">Title:</label>
+                                    <input type="text" class="form-control" id="createTitle" placeholder="Enter title">
+                                </div>
+                                <div class="form-group">
+                                    <label for="createAttendees">Attendees:</label>
+                                    <input type="text" class="form-control" id="createAttendees" placeholder="Enter attendees">
+                                </div>
+                                <div class="form-group">
+                                    <label for="createUsername">Username:</label>
+                                    <input type="text" class="form-control" id="createUsername" placeholder="Enter username">
+                                </div>
+                                <div class="form-group">
+                                    <label for="createContent">Content Brief:</label>
+                                    <textarea id="createContent" rows="3" class="form-control" placeholder="Enter content"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Link MS Team:</label>
+                                    <input type="radio" name="createLinkMS" id="createLinkYes" class="mr-1"> Yes
+                                    <input type="radio" name="createLinkMS" id="createLinkNo" class="ml-3 mr-1"> No
+                                </div>
+                                <div class="form-group">
+                                    <label>Recurrence pattern:</label>
+                                    <input type="radio" name="createRecurrence" id="createOnly" onclick="toggleCreateRecurrence('only')"> Only
+                                    <input type="radio" name="createRecurrence" id="createDaily" onclick="toggleCreateRecurrence('daily')"> Daily
+                                    <input type="radio" name="createRecurrence" id="createWeekly" onclick="toggleCreateRecurrence('weekly')"> Weekly
+                                </div>
+                                <div id="createRecurrenceOnly" class="form-group" style="display:none;">
+                                    <div class="only-label">
+                                        <label for="createDateOnly">Date: </label>
+                                        <input type="datetime-local" class="form-control ml-2" id="createDateOnly">
+                                        <input type="time" class="form-control ml-2" id="createTimeOnly">
+                                    </div>
+                                </div>
+                                <div id="createRecurrenceDaily" class="form-group" style="display:none;">
+                                    <div class="daily-label">
+                                        <label for="createDateStartDaily">Range: </label>
+                                        <input type="datetime-local" class="form-control ml-2" id="createDateStartDaily">
+                                        <input type="datetime-local" class="form-control ml-2" id="createDateEndDaily">
+                                    </div>
+                                </div>
+                                <div id="createRecurrenceWeekly" class="form-group" style="display:none;">
+                                    <div class="weekly-label">
+                                        <label>Weekly:</label>
+                                        <div class="form-inline ml-2">
+                                            <input type="checkbox" id="createMo" class="ml-2"> Mo
+                                            <input type="checkbox" id="createTu" class="ml-2"> Tu
+                                            <input type="checkbox" id="createWe" class="ml-2"> We
+                                            <input type="checkbox" id="createTh" class="ml-2"> Th
+                                            <input type="checkbox" id="createFr" class="ml-2"> Fr
+                                        </div>
+                                    </div>
+                                    <div class="range-label">
+                                        <label>Range:</label>
+                                        <input type="datetime-local" class="form-control ml-2" id="createDateStartWeekly">
+                                        <input type="datetime-local" class="form-control ml-2" id="createDateEndWeekly">
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-4 room-info">
+                            <h5>Room Information</h5>
+                            <p><strong>Time:</strong></p>
+                            <p><strong>Building:</strong> 789 Tower</p>
+                            <p><strong>Floor:</strong> Tầng 8 - new</p>
+                            <p><strong>Meeting room:</strong> Brainstorming</p>
+                            <p><strong>Price:</strong> 100,000 VNĐ/h</p>
+                            <p><strong>Seats:</strong> 6</p>
+                            <p><strong>Devices and services:</strong></p>
+                            <p><strong>Images:</strong></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createBooking()">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section>
+    <span class="overlay"></span>
+    <div class="modal-box">
+        <i class="fa-regular fa-circle-check"></i>
+        <h2 id="modal-title">Notification</h2>
+        <h3 id="modal-message">An action was performed.</h3>
+        <div class="buttons">
+            <button class="close-btn">Ok, Close</button>
+            <button id="secondary-action" style="display: none;">Confirm</button>
+        </div>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script>
+    function openDeletePopup(bookingId) {
+        if (!bookingId) {
+            console.error('Booking ID is missing');
+            return;
+        }
+
+        // Hide the edit form modal if it's open
+        $('#bookingModal').modal('hide');
+
+        // Show the delete confirmation popup
+        showNotification("Confirm whether to delete (Booked) or not?", true);
+        document.getElementById("secondary-action").style.display = "inline"; // Show the confirm button
+        document.getElementById("secondary-action").onclick = function() {
+            jQuery.ajax({
+                url: '/bookings/delete/' + bookingId,
+                type: 'POST', // Use POST instead of DELETE
+                success: function(response) {
+                    showNotification("Deleted (Booked) successfully.");
+                    setTimeout(() => location.reload(), 1000); // Reload the page after deletion
+                },
+                error: function(xhr) {
+                    console.error('Error deleting booking:', xhr.responseText);
+                    showNotification("Failed to delete booking.", false);
+                }
+            });
+        };
+    }
+
+    function openEditForm(bookingId) {
+        fetchBookingDetails(bookingId, true); // Mở form chỉnh sửa
+    }
+
+    function fetchBookingDetails(bookingId, isEdit) {
+        jQuery.ajax({
+            url: `/api/v1/bookings/${bookingId}`, // Updated URL to use the REST API
+            type: 'GET',
+            success: function(response) {
+                const booking = response;
+                $('#bookingForm').data('booking-id', booking.bookingId); // Gán ID vào form
+                // Gán giá trị vào input
+                $('#title').val(booking.title);
+                $('#attendees').val(booking.attendees);
+                $('#content').val(booking.content);
+                $('#dateOnly').val(booking.startTime); // Gán cả ngày và giờ
+                $('#dateStartDaily').val(booking.startTime);
+                $('#dateEndDaily').val(booking.endTime);
+                $('#dateStartWeekly').val(booking.startTime);
+                $('#dateEndWeekly').val(booking.endTime);
+                $('#username').val(booking.username); // Ensure username is populated
+                $('#roomId').val(booking.roomId);
+
+                // Cập nhật radio button Link MS Teams
+                $('#linkYes').prop('checked', booking.linkMS === "yes");
+                $('#linkNo').prop('checked', booking.linkMS === "no");
+
+                // Cập nhật radio button Recurrence
+                $('#only').prop('checked', booking.bookingType === "ONLY");
+                $('#daily').prop('checked', booking.bookingType === "DAILY");
+                $('#weekly').prop('checked', booking.bookingType === "WEEKLY");
+
+                // Hiển thị phần Recurrence tương ứng
+                toggleRecurrence(booking.bookingType.toLowerCase());
+
+                // Cập nhật checkbox Weekly
+                let days = ["mo", "tu", "we", "th", "fr"];
+                let weekdays = booking.weekdays ? booking.weekdays.split(',') : [];
+                days.forEach(day => {
+                    $('#' + day).prop('checked', weekdays.includes(day.charAt(0).toUpperCase() + day.slice(1)));
+                });
+
+                // Mở khóa các input để chỉnh sửa nếu là form chỉnh sửa
+                $('#bookingForm input, #bookingForm textarea').prop('readonly', !isEdit).prop('disabled', !isEdit);
+
+                // Hiển thị modal
+                $('#bookingModal').modal('show');
+            },
+            error: function(xhr, textStatus, errorThrown) {
+                console.error('Lỗi lấy dữ liệu cuộc họp:', xhr.status, textStatus, errorThrown);
+                showNotification(`Failed to fetch booking details: ${xhr.status} ${textStatus}`, false);
+            }
+        });
+    }
+
+    function toggleEdit() {
+        const isDisabled = $('#title').prop('disabled');
+
+        if (isDisabled) {
+            // Enable inputs for editing
+            $('#title, #attendees, #content, #dateOnly, #dateStartDaily, #dateEndDaily, #dateStartWeekly, #dateEndWeekly, input[name="recurrence"], input[name="linkMS"]')
+                .prop('disabled', false).prop('readonly', false);
+            $('#editButton').text('Save');
+        } else {
+            const bookingId = $('#bookingForm').data('booking-id');
+            if (!bookingId) {
+                console.error('Booking ID is missing');
+                showNotification("Booking ID is required.", false);
+                return;
+            }
+
+            const selectedType = $('input[name="recurrence"]:checked').attr('id');
+            let updatedData = {
+                title: $('#title').val() || '',
+                attendees: $('#attendees').val() || '',
+                content: $('#content').val() || '',
+                bookingType: selectedType ? selectedType.toUpperCase() : 'ONLY',  // Default to 'ONLY' if no type is selected
+                startTime: $('#dateOnly').val() || $('#dateStartDaily').val() || $('#dateStartWeekly').val() || '',
+                endTime: selectedType === 'only' ? $('#dateOnly').val() : ($('#dateEndDaily').val() || $('#dateEndWeekly').val() || ''),
+                username: $('#username').val() || '',
+                roomId: $('#roomId').val() || 1
+            };
+
+            // Format startTime và endTime thành định dạng 'yyyy-MM-dd HH:mm:ss'
+            if (updatedData.startTime) {
+                updatedData.startTime = formatDateTime(updatedData.startTime);
+            }
+            if (updatedData.endTime) {
+                updatedData.endTime = formatDateTime(updatedData.endTime);
+            }
+
+            if (selectedType === 'weekly') {
+                updatedData.weekdays = ["mo", "tu", "we", "th", "fr"].filter(day => $('#' + day).prop('checked')).join(',');
+            } else {
+                updatedData.weekdays = null; // Không có weekdays cho loại Daily hoặc Only
+            }
+
+            // Validate required fields
+            if (!updatedData.username) {
+                console.error('Username is missing');
+                showNotification("Username is required.", false);
+                return;
+            }
+
+            if (!updatedData.endTime) {
+                console.error('End time is missing');
+                showNotification("End time is required.", false);
+                return;
+            }
+
+            console.log("Sending update data:", updatedData);
+
+            jQuery.ajax({
+                url: `/api/v1/bookings/${bookingId}`, // Updated URL to use the REST API
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(updatedData),
+                success: function(response) {
+                    showNotification("Updated booking successfully.");
+                    $('#bookingModal').modal('hide');
+                    setTimeout(() => location.reload(), 1000);
+                },
+                error: function(xhr) {
+                    console.error('Error updating booking:', xhr.responseText);
+                    showNotification("Failed to update booking.", false);
+                }
+            });
+
+            // Toggle edit mode back
+            $('#editButton').text('Edit');
+            $('#title, #attendees, #content, #dateOnly, #dateStartDaily, #dateEndDaily, #dateStartWeekly, #dateEndWeekly, input[name="recurrence"], input[name="linkMS"]')
+                .prop('disabled', true).prop('readonly', true);
+
+            // Add notification for Daily recurrence type
+            if (selectedType === 'daily') {
+                const startDate = $('#dateStartDaily').val();
+                const endDate = $('#dateEndDaily').val();
+                showNotification(`You have selected Daily recurrence from ${startDate} to ${endDate}.`, false);
+            }
+        }
+    }
+
+    // Helper function to format date to 'yyyy-MM-dd'T'HH:mm' format
+    function formatDateTime(date) {
+        let formattedDate = new Date(date);
+        let year = formattedDate.getFullYear();
+        let month = (formattedDate.getMonth() + 1).toString().padStart(2, '0');
+        let day = formattedDate.getDate().toString().padStart(2, '0');
+        let hours = formattedDate.getHours().toString().padStart(2, '0');
+        let minutes = formattedDate.getMinutes().toString().padStart(2, '0');
+
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    function toggleRecurrence(type) {
+        // Clear fields based on the selected type
+        if (type === "only") {
+            $('#dateStartDaily, #dateEndDaily, #dateStartWeekly, #dateEndWeekly').val('');
+            $('input[type="checkbox"]').prop('checked', false);
+        } else if (type === "daily") {
+            $('#dateOnly, #dateStartWeekly, #dateEndWeekly').val('');
+            $('input[type="checkbox"]').prop('checked', false);
+        } else if (type === "weekly") {
+            $('#dateOnly, #dateStartDaily, #dateEndDaily').val('');
+        }
+
+        // Toggle visibility and enable/disable fields based on selected type
+        $('#recurrenceOnly').toggle(type === "only");
+        $('#recurrenceDaily').toggle(type === "daily");
+        $('#recurrenceWeekly').toggle(type === "weekly");
+
+        if (type === "only") {
+            $('#dateOnly').prop('disabled', false);
+            $('#dateStartDaily, #dateEndDaily, #dateStartWeekly, #dateEndWeekly, input[type="checkbox"]').prop('disabled', true);
+        } else if (type === "daily") {
+            $('#dateStartDaily, #dateEndDaily').prop('disabled', false);
+            $('#dateOnly, #dateStartWeekly, #dateEndWeekly, input[type="checkbox"]').prop('disabled', true);
+        } else if (type === "weekly") {
+            $('#dateStartWeekly, #dateEndWeekly, input[type="checkbox"]').prop('disabled', false);
+            $('#dateOnly, #dateStartDaily, #dateEndDaily').prop('disabled', true);
+        }
+    }
+
+    function openCreateForm() {
+        // Reset các trường trong form
+        $('#createTitle').val('');
+        $('#createAttendees').val('');
+        $('#createContent').val('');
+        $('#createLinkMS').prop('checked', false);
+        $('input[name="createRecurrence"]').prop('checked', false);
+        $('#createDateOnly').val('');
+        $('#createTimeOnly').val('');
+        $('#createDateStartDaily').val('');
+        $('#createDateEndDaily').val('');
+        $('#createDateStartWeekly').val('');
+        $('#createDateEndWeekly').val('');
+        $('#createUsername').val('');
+        $('input[type="checkbox"]').prop('checked', false);
+
+        // Hiển thị modal form tạo booking
+        $('#createBookingModal').modal('show');
+        $('#createBookingModalLabel').text('Create Booking');
+    }
+
+    function toggleCreateRecurrence(type) {
+        // Điều chỉnh hiển thị các phần của recurrence dựa trên lựa chọn
+        document.getElementById('createRecurrenceOnly').style.display = type === 'only' ? 'block' : 'none';
+        document.getElementById('createRecurrenceDaily').style.display = type === 'daily' ? 'block' : 'none';
+        document.getElementById('createRecurrenceWeekly').style.display = type === 'weekly' ? 'block' : 'none';
+    }
+
+    function createBooking() {
+        // Lấy kiểu recurrence đã chọn
+        const selectedType = $('input[name="createRecurrence"]:checked').attr('id');
+
+        // Chuẩn bị dữ liệu để gửi đến API
+        let bookingData = {
+            title: $('#createTitle').val(),
+            attendees: $('#createAttendees').val(),
+            content: $('#createContent').val(),
+            linkMS: $('input[name="createLinkMS"]:checked').attr('id') === 'createLinkYes',
+            bookingType: selectedType.replace('create', '').toUpperCase(), // Đảm bảo kiểu booking đúng
+            startTime: selectedType === 'createOnly' ? $('#createDateOnly').val() : ($('#createDateStartDaily').val() || $('#createDateStartWeekly').val() || ''),
+            endTime: selectedType === 'createOnly' ? $('#createTimeOnly').val() : ($('#createDateEndDaily').val() || $('#createDateEndWeekly').val() || ''),
+            weekdays: selectedType === 'createWeekly' ? getSelectedWeekdays() : null,
+            username: $('#createUsername').val()
+        };
+
+        // Nếu không có ngày trong tuần khi chọn kiểu WEEKLY, hiển thị thông báo lỗi
+        if (selectedType === 'createWeekly' && !bookingData.weekdays) {
+            showNotification("Please select at least one weekday for weekly bookings.", false);
+            return;
+        }
+
+        // Nếu là loại booking 'Only', tính thời gian kết thúc dựa trên giờ và phút
+        if (selectedType === 'createOnly') {
+            const startDateTime = new Date($('#createDateOnly').val());
+            const endTime = $('#createTimeOnly').val();
+            const [endHours, endMinutes] = endTime.split(':');
+            const endDateTime = new Date(startDateTime);
+            endDateTime.setHours(endHours);
+            endDateTime.setMinutes(endMinutes);
+
+            bookingData.startTime = startDateTime.toISOString().slice(0, 19).replace('T', ' ');
+            bookingData.endTime = endDateTime.toISOString().slice(0, 19).replace('T', ' ');
+        }
+
+        console.log("Creating booking with data:", bookingData);
+
+        // Gửi dữ liệu booking đến API
+        jQuery.ajax({
+            url: '/api/v1/bookings', // Địa chỉ URL API
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(bookingData),
+            success: function(response) {
+                let notificationMessage = "Created booking successfully.";
+                if (selectedType === 'createDaily') {
+                    notificationMessage += ` Booking period: ${bookingData.startTime} to ${bookingData.endTime}.`;
+                }
+                showNotification(notificationMessage, true); // Hiển thị thông báo thành công
+                $('#createBookingModal').modal('hide');
+                setTimeout(() => location.reload(), 1000); // Tải lại trang sau 1 giây
+            },
+            error: function(xhr) {
+                if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.retMsg) {
+                    showNotification(`Failed to create booking: ${xhr.responseJSON.retMsg}`, false); // Hiển thị thông báo lỗi từ API
+                } else {
+                    console.error('Error creating booking:', xhr.status, xhr.statusText, xhr.responseText);
+                    showNotification("Failed to create booking.", false); // Hiển thị thông báo lỗi chung
+                }
+            }
+        });
+    }
+
+    // Hàm lấy các ngày đã chọn cho kiểu Weekly
+    function getSelectedWeekdays() {
+        const selectedDays = [];
+        // Chỉ cho phép các ngày từ Thứ Hai đến Thứ Sáu
+        if ($('#createMo').prop('checked')) selectedDays.push('Mo');
+        if ($('#createTu').prop('checked')) selectedDays.push('Tu');
+        if ($('#createWe').prop('checked')) selectedDays.push('We');
+        if ($('#createTh').prop('checked')) selectedDays.push('Th');
+        if ($('#createFr').prop('checked')) selectedDays.push('Fr');
+
+        // Không cho phép chọn thứ Bảy và Chủ Nhật
+        // Nếu người dùng chọn thứ 7 hay chủ nhật, có thể thông báo lỗi hoặc không thêm vào mảng
+        if ($('#createSa').prop('checked') || $('#createSu').prop('checked')) {
+            showNotification("Saturday and Sunday are not allowed for weekly bookings.", false);
+            return []; // Trả về mảng rỗng nếu có thứ 7 hoặc chủ nhật
+        }
+
+        return selectedDays.join(',');
+    }
+
+    tinymce.init({
+        selector: '#content, #createContent',
+        plugins: 'advlist autolink lists link image charmap print preview hr anchor pagebreak',
+        toolbar: 'bold italic underline | alignleft aligncenter alignright alignjustify | link image',
+        external_plugins: {
+            'print': 'https://cdn.tiny.cloud/1/q8eyc0pclp8vkwynx04vs7o65308fed83bgx6k7udmbjg26m/tinymce/5/plugins/print/plugin.min.js',
+            'hr': 'https://cdn.tiny.cloud/1/q8eyc0pclp8vkwynx04vs7o65308fed83bgx6k7udmbjg26m/tinymce/5/plugins/hr/plugin.min.js'
+        }
+    });
+
+    let initialFormData = {};
+
+    function storeInitialData() {
+        const formElements = document.querySelectorAll('#bookingForm input, #bookingForm textarea');
+        formElements.forEach(element => {
+            if (element.type === 'checkbox' || element.type === 'radio') {
+                initialFormData[element.id] = element.checked;
+            } else {
+                initialFormData[element.id] = element.value;
+            }
+        });
+    }
+
+    function resetFormData() {
+        const formElements = document.querySelectorAll('#bookingForm input, #bookingForm textarea');
+        formElements.forEach(element => {
+            if (element.type === 'checkbox' || element.type === 'radio') {
+                element.checked = initialFormData[element.id];
+            } else {
+                element.value = initialFormData[element.id];
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        storeInitialData();
+
+        $('#bookingModal').on('hidden.bs.modal', function (event) {
+            resetFormData();
+            const formElements = document.querySelectorAll('#bookingForm input, #bookingForm textarea');
+            formElements.forEach(element => {
+                if (element.type !== 'radio' && element.type !== 'checkbox') {
+                    element.readOnly = true;
+                }
+                element.disabled = true;
+            });
+            document.getElementById('editButton').textContent = 'Edit';
+        });
+    });
+
+    function showNotification(message, confirm = false) {
+        document.getElementById("modal-title").textContent = confirm ? "Confirmation" : "Notification";
+        document.getElementById("modal-message").textContent = message;
+        document.getElementById("secondary-action").style.display = confirm ? "inline-block" : "none";
+        document.querySelector("section").classList.add("active");
+    }
+
+    document.querySelector(".overlay").addEventListener("click", () => document.querySelector("section").classList.remove("active"));
+    document.querySelector(".close-btn").addEventListener("click", () => document.querySelector("section").classList.remove("active"));
+</script>
+</body>
+</html>
