@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
   <title>Quản lý Yêu Cầu</title>
   <style>
     :root {
@@ -635,6 +636,7 @@
       font-weight: 500;
       border-radius: 8px;
       transition: 0.2s;
+      background: #006dcc;
     }
 
     .btn-success:hover {
@@ -729,7 +731,112 @@
         gap: 10px;
       }
     }
+    /* Tổng thể modal */
+    #createRequestModal .modal-content {
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
+    /* Header modal */
+    #createRequestModal .modal-header {
+      padding: 15px 20px;
+      background-color: #28a745;
+      color: white;
+    }
+
+    /* Title */
+    #createRequestModal .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    /* Đóng nút */
+    #createRequestModal .close {
+      font-size: 24px;
+      line-height: 1;
+      border: none;
+      background: none;
+      opacity: 0.8;
+    }
+
+    /* Body */
+    #createRequestModal .modal-body {
+      padding: 20px;
+    }
+
+    /* Group mỗi mục */
+    #createRequestModal .form-group {
+      margin-bottom: 15px;
+    }
+
+    /* Label */
+    #createRequestModal label {
+      font-weight: 500;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    /* Select & input */
+    #createRequestModal .form-control {
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+    }
+
+    /* Nút thêm ngày nghỉ */
+    #dateRangesContainer + button {
+      border-radius: 20px;
+      padding: 5px 15px;
+    }
+
+    /* Footer */
+    #createRequestModal .modal-footer {
+      padding: 15px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Các nút */
+    #createRequestModal .btn {
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    /* Icon trong nút */
+    #createRequestModal .btn i {
+      margin-right: 5px;
+    }
+
+    /* Text thông báo ngày nghỉ */
+    #leaveInfo {
+      font-size: 0.95rem;
+      padding: 5px 0;
+    }
+    /* Group mỗi mục: label & input thẳng hàng */
+    #createRequestModal .form-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+
+    /* Label căn trái, giữ độ rộng đồng đều */
+    #createRequestModal label {
+      width: 100%;
+      font-weight: 500;
+      margin-bottom: 6px;
+      display: inline-block;
+    }
+
+    /* Input, select full width */
+    #createRequestModal .form-control,
+    #createRequestModal .form-select {
+      width: 100%;
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -759,9 +866,13 @@
           <option value="">Tất cả</option>
           <option value="UNPAID_LEAVE">Nghỉ không lương</option>
           <option value="PAID_LEAVE">Nghỉ có lương</option>
+          <option value="SICK_LEAVE">Nghỉ ốm</option>
+          <option value="MATERNITY_LEAVE">Nghỉ thai sản</option>
+          <option value="COMPENSATORY_LEAVE">Nghỉ bù</option>
+          <option value="PERSONAL_LEAVE">Nghỉ việc riêng</option>
+          <option value="BEREAVEMENT_LEAVE">Nghỉ do tang lễ</option>
         </select>
       </div>
-
       <div class="filter-group">
         <label for="requestStatus">Trạng thái</label>
         <select id="requestStatus">
@@ -838,11 +949,21 @@
           <select id="editRequestType" class="form-control">
             <option value="PAID_LEAVE">Nghỉ có lương</option>
             <option value="UNPAID_LEAVE">Nghỉ không lương</option>
+            <option value="SICK_LEAVE">Nghỉ ốm</option>
+            <option value="MATERNITY_LEAVE">Nghỉ thai sản</option>
+            <option value="COMPENSATORY_LEAVE">Nghỉ bù</option>
+            <option value="PERSONAL_LEAVE">Nghỉ việc riêng</option>
+            <option value="BEREAVEMENT_LEAVE">Nghỉ do tang lễ</option>
           </select>
         </div>
         <div class="form-group">
           <label>Thông tin ngày nghỉ:</label>
           <p id="leaveInfo1" class="text-info mb-2">Đang tải thông tin...</p>
+          <label for="isPaidLeave">Hưởng lương:</label>
+          <select id="isPaidLeave1" class="form-control">
+            <option value="true">Có</option>
+            <option value="false">Không </option>
+          </select>
         </div>
         <div class="detail-row">
           <span class="detail-label">Ngày nghỉ:</span>
@@ -864,10 +985,10 @@
         <button class="btn btn-outline" onclick="closeModal()">
           <i class="fas fa-times"></i> Đóng
         </button>
-        <button class="btn btn-primary" onclick="updateRequest()">
+        <button class="btn btn-primary" onclick="updateRequest()" style="background: #006dcc">
           <i class="fas fa-save"></i> Cập nhật
         </button>
-        <button class="btn btn-danger" onclick="cancelRequest()">
+        <button class="btn btn-danger" onclick="cancelRequest()" style="background: red">
           <i class="fas fa-trash"></i> Hủy yêu cầu
         </button>
 
@@ -884,28 +1005,50 @@
           <span>&times;</span>
         </button>
       </div>
+
       <div class="modal-body">
+        <div class="form-group">
+          <label for="createRequestType">Kiểu yêu cầu: <span class="text-danger"></span></label>
+          <select id="createRequestType1" class="form-control" required onchange="onRequestTypeChange()">
+            <option value="LEAVE_REQUEST">Leave Request</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="createRequestReason">Yêu cầu: <span class="text-danger"></span></label>
+          <select id="createRequestReason1" class="form-control" disabled required>
+            <option value="TIME_OFF">Time-off/Đơn xin nghỉ</option>
+          </select>
+        </div>
         <div class="form-group">
           <label>Loại yêu cầu:</label>
           <select id="createRequestType" class="form-control">
             <option value="PAID_LEAVE">Nghỉ có lương</option>
             <option value="UNPAID_LEAVE">Nghỉ không lương</option>
+            <option value="SICK_LEAVE">Nghỉ ốm</option>
+            <option value="MATERNITY_LEAVE">Nghỉ thai sản</option>
+            <option value="COMPENSATORY_LEAVE">Nghỉ bù</option>
+            <option value="PERSONAL_LEAVE">Nghỉ việc riêng</option>
+            <option value="BEREAVEMENT_LEAVE">Nghỉ do tang lễ</option>
           </select>
         </div>
-
         <!-- ✅ Thông tin ngày nghỉ -->
         <div class="form-group">
           <label>Thông tin ngày nghỉ:</label>
           <p id="leaveInfo" class="text-info mb-2">Đang tải thông tin...</p>
+          <label for="isPaidLeave">Hưởng lương:</label>
+          <select id="isPaidLeave" class="form-control">
+            <option value="true">Có</option>
+            <option value="false">Không </option>
+          </select>
         </div>
 
+
         <div class="form-group">
-          <label>Ngày nghỉ:</label>
-          <div class="d-flex gap-2">
-            <input type="date" id="createStartDate" class="form-control" />
-            <input type="date" id="createEndDate" class="form-control" />
-          </div>
+          <label>Ngày nghỉ (bắt buộc):</label>
+          <div id="dateRangesContainer"></div>
+          <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addDateRange()">+ Thêm mới</button>
         </div>
+
 
         <div class="form-group">
           <label>Lý do:</label>
@@ -939,53 +1082,130 @@
     document.getElementById("createRequestModal").style.display = "none";
     document.getElementById("createRequestModal").classList.remove("show");
   }
+  function addDateRange() {
+    const container = document.getElementById("dateRangesContainer");
+
+    const div = document.createElement("div");
+    div.className = "d-flex gap-2 align-items-center mb-2";
+
+    div.innerHTML = `
+    <input type="date" class="form-control leave-date" required />
+    <input type="number" min="1" max="8" class="form-control leave-hours" placeholder="Số giờ nghỉ" required />
+    <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash-can"></i></button>
+  `;
+
+    const [dateInput, hourInput, endTimeInput] = div.querySelectorAll("input");
+
+    hourInput.addEventListener("input", () => {
+      const hours = parseFloat(hourInput.value);
+      if (!isNaN(hours) && hours > 0 && hours <= 8) {
+        // Bắt đầu từ 8:00
+        const end = new Date(`1970-01-01T08:00:00`);
+        end.setHours(end.getHours() + hours);
+
+        // Format HH:mm
+        const formatted = end.toTimeString().slice(0, 5);
+        endTimeInput.value = formatted;
+      } else {
+        endTimeInput.value = "";
+      }
+    });
+
+    container.appendChild(div);
+  }
+  function collectLeaveRequests() {
+    const list = [];
+    document.querySelectorAll("#dateRangesContainer > div").forEach(div => {
+      const date = div.querySelector(".leave-date").value;
+      const hours = div.querySelector(".leave-hours").value;
+      const endTime = div.querySelector(".end-time").value;
+
+      if (date && hours && endTime) {
+        list.push({
+          date,
+          hours: parseFloat(hours),
+          endTime
+        });
+      }
+    });
+    return list;
+  }
 
   async function submitCreateRequest() {
     const type = document.getElementById("createRequestType").value;
-    const startDate = document.getElementById("createStartDate").value;
-    const endDate = document.getElementById("createEndDate").value;
     const reason = document.getElementById("createRequestReason").value;
+    const isPaidLeave = document.getElementById("isPaidLeave").value;
 
-    if (!type || !startDate || !endDate) {
+    if (!type || isPaidLeave === "") {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
 
+    const dateRanges = [];
+    const dateItems = document.querySelectorAll("#dateRangesContainer > div");
 
-    const startTime = new Date(`${startDate}T08:00:00+07:00`).toISOString();
-    const endTime = new Date(`${endDate}T17:00:00+07:00`).toISOString();
+    let isValid = true;
 
-    const requestBody = {
-      requestType: type,
-      startTime: startTime,
-      endTime: endTime,
-      requestReason: reason,
-      requestStatus: "PENDING"
-    };
+    dateItems.forEach(div => {
+      const date = div.querySelector(".leave-date").value;
+      const hours = parseFloat(div.querySelector(".leave-hours").value);
+
+      if (!date || isNaN(hours) || hours <= 0 || hours > 8) {
+        isValid = false;
+        return;
+      }
+
+      const start = new Date(`${date}T08:00:00+07:00`);
+      const end = new Date(start);
+      end.setHours(end.getHours() + hours);
+
+      dateRanges.push({
+        startTime: start.toISOString(),
+        endTime: end.toISOString()
+      });
+    });
+
+    if (!isValid || dateRanges.length === 0) {
+      alert("Vui lòng nhập đầy đủ và đúng định dạng ngày & giờ nghỉ!");
+      return;
+    }
 
     try {
-      const response = await fetch("/api/v1/requests/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(requestBody)
-      });
+      for (const range of dateRanges) {
+        const requestBody = {
+          requestType: type,
+          startTime: range.startTime,
+          endTime: range.endTime,
+          requestReason: reason,
+          isPaidLeave: isPaidLeave === "true",
+          requestStatus: "PENDING"
+        };
 
-      const result = await response.json();
+        const response = await fetch("/api/v1/requests/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(requestBody)
+        });
 
-      if (result.status === "Success") {
-        alert("Tạo yêu cầu thành công!");
-        closeCreateModal();
-        // TODO: Gọi lại danh sách yêu cầu nếu cần
-      } else {
-        alert("Không thể tạo yêu cầu: " + result.message);
+        const result = await response.json();
+
+        if (result.status !== "Success") {
+          alert("Không thể tạo yêu cầu cho ngày nghỉ: " + result.message);
+          return;
+        }
       }
+
+      alert("Tạo tất cả yêu cầu thành công!");
+      closeCreateModal();
+      // TODO: Refresh danh sách nếu cần
     } catch (error) {
-      console.error("Lỗi tạo yêu cầu:", error);
+      console.error("Lỗi khi tạo yêu cầu:", error);
       alert("Đã xảy ra lỗi khi gửi yêu cầu.");
     }
   }
+
 
   async function loadLeaveInfo() {
     const infoElements = [
@@ -995,7 +1215,8 @@
 
     const createSelect = document.getElementById("createRequestType");
     const editSelect = document.getElementById("editRequestType");
-    const totalDaysPerYear = 2;
+    const isPaidSelect = document.getElementById("isPaidLeave");
+    const totalDaysPerYear = 0;
 
     try {
       const response = await fetch("/api/v1/requests/days-off", {
@@ -1026,13 +1247,12 @@
           el.className = "text-info mb-2";
         });
 
-        if (createSelect) {
-          createSelect.value = "PAID_LEAVE";
-          createSelect.disabled = false;
-        }
-        if (editSelect) {
-          editSelect.disabled = false;
-          // Không set cứng value nếu đang edit — chỉ disable nếu cần
+        if (createSelect) createSelect.disabled = false;
+        if (editSelect) editSelect.disabled = false;
+
+        if (isPaidSelect) {
+          isPaidSelect.value = "true";
+          isPaidSelect.disabled = false; // Cho phép thay đổi
         }
 
       } else {
@@ -1041,15 +1261,15 @@
           el.className = "text-danger mb-2";
         });
 
-        if (createSelect) {
-          createSelect.value = "UNPAID_LEAVE";
-          createSelect.disabled = true;
-        }
-        if (editSelect) {
-          editSelect.value = "UNPAID_LEAVE";
-          editSelect.disabled = true;
+        if (createSelect) createSelect.disabled = false;
+        if (editSelect) editSelect.disabled = false;
+
+        if (isPaidSelect) {
+          isPaidSelect.value = "false";
+          isPaidSelect.disabled = true; // Không cho thay đổi
         }
       }
+
     } catch (error) {
       console.error("Lỗi khi lấy ngày nghỉ:", error);
       infoElements.forEach(el => {
@@ -1129,17 +1349,9 @@
       const viewButton = document.createElement("button");
       viewButton.className = "action-btn";
       viewButton.innerHTML = '<i class="fas fa-eye"></i>';
-
-// Không cho click nếu đã duyệt hoặc bị từ chối
-      if (request.requestStatus === "APPROVED" || request.requestStatus === "REJECTED") {
-        viewButton.disabled = true;
-        viewButton.style.opacity = 0.5;
-        viewButton.style.cursor = "not-allowed";
-        viewButton.title = "Không thể sửa khi đã duyệt hoặc bị từ chối";
-      } else {
         viewButton.title = "Xem chi tiết";
         viewButton.onclick = () => viewRequest(request.requestId);
-      }
+
 
       actionCell.appendChild(viewButton);
 
@@ -1147,26 +1359,30 @@
 
     });
   }
-
   function formatDate(dateString) {
     if (!dateString) return "-";
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN'); // Định dạng ngày tháng theo Việt Nam
   }
-
   function formatDuration(start, end) {
     if (!start || !end) return "-";
     const startDate = new Date(start).toLocaleDateString('vi-VN');
     const endDate = new Date(end).toLocaleDateString('vi-VN');
     return startDate === endDate ? startDate : `${startDate} → ${endDate}`;
   }
-
   function formatRequestType(type) {
-    return {
-      "UNPAID_LEAVE": "Nghỉ không lương",
+    const typeMap = {
       "PAID_LEAVE": "Nghỉ có lương",
-    }[type] || "-";
+      "UNPAID_LEAVE": "Nghỉ không lương",
+      "SICK_LEAVE": "Nghỉ ốm",
+      "MATERNITY_LEAVE": "Nghỉ thai sản",
+      "COMPENSATORY_LEAVE": "Nghỉ bù",
+      "PERSONAL_LEAVE": "Nghỉ việc riêng",
+      "BEREAVEMENT_LEAVE": "Nghỉ do tang lễ"
+    };
+    return typeMap[type] || "-";
   }
+
 
   function formatRequestStatus(status) {
     return {
